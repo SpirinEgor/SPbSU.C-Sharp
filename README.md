@@ -1,5 +1,5 @@
 # C#
 tasks from lecture of C#
-1. Parallel qsort
-2. Parallel search for primes on segment
-3. Hash of the folder using Tasks
+1. Parallel qsort (sort.cs)
+2. Parallel search for primes on segment (primes.cs)
+3. Hash of the folder using Tasks (hash.cs)
