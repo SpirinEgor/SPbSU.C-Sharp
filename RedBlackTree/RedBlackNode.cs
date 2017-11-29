@@ -1,94 +1,26 @@
 using System;
+using System.Threading.Tasks;
 
 namespace RedBlackTree
 {
 
     public class Node<K, V> where K: IComparable
     {
-        private K key;
-        private V value;
-        private bool color = false; // false - black, true - red
-        private Node<K, V> left = null;
-        private Node<K, V> right = null;
-        private Node<K, V> parent = null;
-    
-        public K Key
-        {
-            get
-            {
-                return key;
-            }
-            set
-            {
-                key = value;
-            }
-        }
-
-        public V Value
-        {
-            get
-            {
-                return value;
-            }
-            set
-            {
-                this.value = value;
-            }
-        }
-
-        public bool Color
-        {
-            get
-            {
-                return color;
-            }
-            set
-            {
-                color = value;
-            }
-        }
-
-        public Node<K, V> Left
-        {
-            get
-            {
-                return left;
-            }
-            set
-            {
-                left = value;
-            }
-        }
-
-        public Node<K, V> Right
-        {
-            get
-            {
-                return right;
-            }
-            set
-            {
-                right = value;
-            }
-        }
-
-        public Node<K, V> Parent
-        {
-            get
-            {
-                return parent;
-            }
-            set
-            {
-                parent = value;
-            }
-        }        
+        public K Key {get; set;}
+        public V Value {get; set;}
+        public bool Color {get; set;}   // false - black, true - red
+        public Node<K, V> Left {get; set;}
+        public Node<K, V> Right {get; set;}
+        public Node<K, V> Parent {get; set;}
 
         public Node(K keyNew, V valueNew, bool colorNew)
         {
-            key = keyNew;
-            value = valueNew;
-            color = colorNew;
+            Key = keyNew;
+            Value = valueNew;
+            Color = colorNew;
+            Left = null;
+            Right = null;
+            Parent = null;
         }
 
         public override bool Equals(object obj)
@@ -102,7 +34,7 @@ namespace RedBlackTree
                 }
                 else
                 {
-                    return key.Equals(other.Key) && value.Equals(other.Value) && color == other.Color;
+                    return Key.Equals(other.Key) && Value.Equals(other.Value) && Color == other.Color;
                 }
             }
             else
@@ -117,98 +49,96 @@ namespace RedBlackTree
             return 0;
         }
 
-        public Node<K, V> GetMinimum(Node<K, V> nil)
+        public async Task<Node<K, V>> GetMinimum(Node<K, V> nil)
         {
-            if (left == nil)
+            return await Task.Run(async () => 
             {
-                return this;
-            }
-            else
-            {
-                return left.GetMinimum(nil);
-            }
+                if (Left == nil)
+                {
+                    return this;
+                }
+                else
+                {
+                    return await Left.GetMinimum(nil);
+                }
+            });
         }
 
-        public Node<K, V> GetMaximum(Node<K, V> nil)
+        public async Task<Node<K, V>> GetMaximum(Node<K, V> nil)
         {
-            if (right == null)
+            return await Task.Run(async () =>
             {
-                return this;
-            }
-            else
-            {
-                return right.GetMaximum(nil);
-            }
+                if (Right == null)
+                {
+                    return this;
+                }
+                else
+                {
+                    return await Right.GetMaximum(nil);
+                }
+            });
         }
 
-        public Node<K, V> RotateLeft(Node<K, V> rootOld, Node<K, V> nil)
+        public async Task<Node<K, V>> RotateLeft(Node<K, V> rootOld, Node<K, V> nil)
         {
-            var root = rootOld;
-            var rightSon = right;
-            right = rightSon.Left;
-            if (rightSon.Left != nil)
+            return await Task.Run(() => 
             {
-                rightSon.Left.Parent = this;
-            }
-            rightSon.Parent = parent;
-            if (parent == nil)
-            {
-                root = rightSon;
-            }
-            else if (this == parent.Right)
-            {
-                parent.Right = rightSon;
-            }
-            else
-            {
-                parent.Left = rightSon;
-            }
-            rightSon.Left = this;
-            parent = rightSon;
-            return root;
+                var root = rootOld;
+                var rightSon = Right;
+                Right = rightSon.Left;
+                if (rightSon.Left != nil)
+                {
+                    rightSon.Left.Parent = this;
+                }
+                rightSon.Parent = Parent;
+                if (Parent == nil)
+                {
+                    root = rightSon;
+                }
+                else if (this == Parent.Right)
+                {
+                    Parent.Right = rightSon;
+                }
+                else
+                {
+                    Parent.Left = rightSon;
+                }
+                rightSon.Left = this;
+                Parent = rightSon;
+                return root;
+            });
         }
 
-        public Node<K, V> RotateRight(Node<K, V> rootOld, Node<K, V> nil)
+        public async Task<Node<K, V>> RotateRight(Node<K, V> rootOld, Node<K, V> nil)
         {
-            var root = rootOld;
-            var leftSon = left;
-            left = leftSon.Right;
-            if (leftSon.Right != nil)
+            return await Task.Run(() =>
             {
-                leftSon.Right.Parent = this;
-            }
-            leftSon.Parent = parent;
-            if (parent == nil)
-            {
-                root = leftSon;
-            }
-            else if (this == parent.Right)
-            {
-                parent.Right = leftSon;
-            }
-            else
-            {
-                parent.Left = leftSon;
-            }
-            leftSon.Right = this;
-            parent = leftSon;
-            return root;
+                var root = rootOld;
+                var leftSon = Left;
+                Left = leftSon.Right;
+                if (leftSon.Right != nil)
+                {
+                    leftSon.Right.Parent = this;
+                }
+                leftSon.Parent = Parent;
+                if (Parent == nil)
+                {
+                    root = leftSon;
+                }
+                else if (this == Parent.Right)
+                {
+                    Parent.Right = leftSon;
+                }
+                else
+                {
+                    Parent.Left = leftSon;
+                }
+                leftSon.Right = this;
+                Parent = leftSon;
+                return root;
+            });
         }
 
-        public void Print()
-        {
-            string res = "(" + key + "/" + value + "/";
-            if (color)
-            {
-                res += "RED";
-            }
-            else
-            {
-                res += "BLACK";
-            }
-            res += ")";
-            System.Console.Write(res);
-        }
     }
 
 }
