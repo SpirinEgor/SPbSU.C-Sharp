@@ -37,17 +37,40 @@ namespace RedBlackTree
         static void Main(string[] args)
         {
             Console.WriteLine("insert x y\nremove x\nfind x\nexit");
-            Task input = ControlInput();
-            Task queryProcessor = QueryProcessor();
-            input.Wait();
-            Console.WriteLine("Work with input has ended");
-            queryProcessor.Wait();
-            Console.WriteLine("All requests processed");
+            ManualResetEvent manualResetEvent = new ManualResetEvent(false);
+            int processCount = 2;
+            ThreadPool.QueueUserWorkItem(async _ =>
+            {
+                await ControlInput();
+                Console.WriteLine("Work with input has ended");
+                lock ("Decrease procces counter")
+                {
+                    --processCount;
+                    if (processCount == 0)
+                    {
+                        manualResetEvent.Set();
+                    }
+                }
+            });
+            ThreadPool.QueueUserWorkItem(async _ =>
+            {
+                await QueryProcessor();
+                Console.WriteLine("All requests processed");
+                lock ("Decrease procces counter")
+                {
+                    --processCount;
+                    if (processCount == 0)
+                    {
+                        manualResetEvent.Set();
+                    }
+                }
+            });
+            manualResetEvent.WaitOne();
         }
 
         static Task ControlInput()
         {
-            return Task.Run(() => 
+            return Task.Run(() =>
             {
                 while(true)
                 {
@@ -108,9 +131,9 @@ namespace RedBlackTree
 
         static Task QueryProcessor()
         {
-            return Task.Run(() => 
+            return Task.Run(async () =>
             {
-                int workingRequest = 0; // >= 0 - start find, < 0 - currently working with updates
+                int workingRequest = 0; // >= 0 - start find, == 0 - start updates, exit
                 var tree = new Tree<int, int>();
                 while (true)
                 {
@@ -119,49 +142,83 @@ namespace RedBlackTree
                         Thread.Sleep(1000);
                         continue;
                     }
+                    Request nextRequest;
                     lock ("Peek lock")
                     {
-                        Request nextRequest = requestQueue.Peek();
-                        if (nextRequest.command == 2 && workingRequest >= 0)
+                        nextRequest = requestQueue.Peek();
+                    }
+                    if (nextRequest.command == 2)
+                    {
+                        bool flag = false;
+                        lock ("Try to increase counter")
                         {
-                            ++workingRequest;
-                            requestQueue.Dequeue();
+                            if (workingRequest >= 0)
+                            {
+                                ++workingRequest;
+                                requestQueue.Dequeue();
+                                flag = true;
+                            }        
+                        }
+                        if (flag)
+                        {
                             ThreadPool.QueueUserWorkItem(async _ =>
                             {
                                 var requestResult = await tree.Find(nextRequest.x);
                                 Console.Write("result for request: find " + nextRequest.x);
-                                Console.WriteLine(" is " + (requestResult == null ? "no such key" : requestResult.Value.ToString()));
-                                --workingRequest;
+                                Console.WriteLine(" is " + (requestResult == null ?
+                                                "no such key" : requestResult.Value.ToString()));
+                                lock ("Decrease counter")
+                                {
+                                    --workingRequest;
+                                }
                             });
                         }
-                        else if (nextRequest.command == 3 && workingRequest == 0)
+                    }
+                    else if (nextRequest.command == 3)
+                    {
+                        bool flag = false;
+                        lock ("Try to exit")
                         {
-                            requestQueue.Dequeue();
+                            if (workingRequest == 0)
+                            {
+                                requestQueue.Dequeue();
+                                flag = true;
+                            }
+                        }
+                        if (flag)
+                        {
                             break;
                         }
-                        else if (nextRequest.command <= 1 && workingRequest == 0)
+                    }
+                    else if (nextRequest.command <= 1)
+                    {
+                        bool flag = false;
+                        lock ("Try to update")
                         {
-                            --workingRequest;
-                            requestQueue.Dequeue();
+                            if (workingRequest == 0)
+                            {
+                                --workingRequest;
+                                requestQueue.Dequeue();
+                                flag = true;
+                            }
+                        }
+                        if (flag)
+                        {
                             if (nextRequest.command == 0)
                             {
-                                ThreadPool.QueueUserWorkItem(async _ =>
-                                {
-                                    var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
-                                    Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
-                                    Console.WriteLine(" is " + (requestResult ? "success": "fail"));
-                                    ++workingRequest;
-                                });
+                                var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
+                                Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
+                                Console.WriteLine(" is " + (requestResult ? "success": "fail"));
                             }
                             else
                             {
-                                ThreadPool.QueueUserWorkItem(async _ =>
-                                {
-                                    var requestResult = await tree.Remove(nextRequest.x);
-                                    Console.Write("result for request: remove " + nextRequest.x);
-                                    Console.WriteLine(" is " + (requestResult ? "success": "fail"));
-                                    ++workingRequest;
-                                });
+                                var requestResult = await tree.Remove(nextRequest.x);
+                                Console.Write("result for request: remove " + nextRequest.x);
+                                Console.WriteLine(" is " + (requestResult ? "success": "fail"));
+                            }
+                            lock ("Increase counter")
+                            {
+                                ++workingRequest;
                             }
                         }
                     }
