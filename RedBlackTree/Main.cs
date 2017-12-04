@@ -36,13 +36,13 @@ namespace RedBlackTree
 
         static void Main(string[] args)
         {
-            Console.WriteLine("insert x y\nremove x\nfind x\nexit");
+            // Console.WriteLine("insert x y\nremove x\nfind x\nexit");
             ManualResetEvent manualResetEvent = new ManualResetEvent(false);
             int processCount = 2;
             ThreadPool.QueueUserWorkItem(async _ =>
             {
                 await ControlInput();
-                Console.WriteLine("Work with input has ended");
+                // Console.WriteLine("Work with input has ended");
                 lock ("Decrease procces counter")
                 {
                     --processCount;
@@ -55,7 +55,7 @@ namespace RedBlackTree
             ThreadPool.QueueUserWorkItem(async _ =>
             {
                 await QueryProcessor();
-                Console.WriteLine("All requests processed");
+                // Console.WriteLine("All requests processed");
                 lock ("Decrease procces counter")
                 {
                     --processCount;
@@ -118,7 +118,7 @@ namespace RedBlackTree
                         lock ("Enqueue lock")
                         {
                             requestQueue.Enqueue(request);
-                            System.Console.WriteLine(String.Join(" ", input) + " successfully enqueued");
+                            // System.Console.WriteLine(String.Join(" ", input) + " successfully enqueued");
                         }
                     }
                     else
@@ -164,9 +164,10 @@ namespace RedBlackTree
                             ThreadPool.QueueUserWorkItem(async _ =>
                             {
                                 var requestResult = await tree.Find(nextRequest.x);
-                                Console.Write("result for request: find " + nextRequest.x);
-                                Console.WriteLine(" is " + (requestResult == null ?
-                                                "no such key" : requestResult.Value.ToString()));
+                                // Console.Write("result for request: find " + nextRequest.x);
+                                // Console.WriteLine(" is " + (requestResult == null ?
+                                                // "no such key" : requestResult.Value.ToString()));
+                                Console.WriteLine(requestResult == null ? "null" : requestResult.Value.ToString());
                                 lock ("Decrease counter")
                                 {
                                     --workingRequest;
@@ -207,14 +208,14 @@ namespace RedBlackTree
                             if (nextRequest.command == 0)
                             {
                                 var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
-                                Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
-                                Console.WriteLine(" is " + (requestResult ? "success": "fail"));
+                                // Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
+                                // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
                             }
                             else
                             {
                                 var requestResult = await tree.Remove(nextRequest.x);
-                                Console.Write("result for request: remove " + nextRequest.x);
-                                Console.WriteLine(" is " + (requestResult ? "success": "fail"));
+                                // Console.Write("result for request: remove " + nextRequest.x);
+                                // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
                             }
                             lock ("Increase counter")
                             {
