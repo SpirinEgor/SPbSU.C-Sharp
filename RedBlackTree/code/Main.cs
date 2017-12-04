@@ -143,9 +143,9 @@ namespace RedBlackTree
                 var tree = new Tree<int, int>();
                 while (true)
                 {
-                    if (requestQueue.Count == 0)
+                    if (requestQueue.Count == 0 || waitForUpdate)
                     {
-                        Thread.Sleep(1000);
+                        Thread.Sleep(100);
                         continue;
                     }
                     Request nextRequest;
@@ -181,11 +181,12 @@ namespace RedBlackTree
                     }
                     else if (nextRequest.command <= 1)
                     {
+                        waitForUpdate = true;
                         while (workingRequest != 0)
                         {
-                            waitForUpdate = true;
                             Thread.Sleep(0);
                         }
+                        --workingRequest;
                         if (nextRequest.command == 0)
                         {
                             var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
