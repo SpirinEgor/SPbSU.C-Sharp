@@ -34,6 +34,7 @@ namespace RedBlackTree
     {
 
         static Queue<Request> requestQueue = new Queue<Request>();
+        static bool waitForUpdate = false;
 
         static void Main(string[] args)
         {
@@ -44,26 +45,20 @@ namespace RedBlackTree
             {
                 await ControlInput();
                 // Console.WriteLine("Work with input has ended");
-                lock ("Decrease procces counter")
+                --processCount;
+                if (processCount == 0)
                 {
-                    --processCount;
-                    if (processCount == 0)
-                    {
-                        manualResetEvent.Set();
-                    }
+                    manualResetEvent.Set();
                 }
             });
             ThreadPool.QueueUserWorkItem(async _ =>
             {
                 await QueryProcessor();
                 // Console.WriteLine("All requests processed");
-                lock ("Decrease procces counter")
+                --processCount;
+                if (processCount == 0)
                 {
-                    --processCount;
-                    if (processCount == 0)
-                    {
-                        manualResetEvent.Set();
-                    }
+                    manualResetEvent.Set();
                 }
             });
             manualResetEvent.WaitOne();
@@ -81,6 +76,10 @@ namespace RedBlackTree
                     {
                         Thread.Sleep(1000);
                         continue;
+                    }
+                    if (requestQueue.Count >= 1e6)
+                    {
+                        Thread.Sleep(100);
                     }
                     bool checkInput = false;
                     for (int i = 1; i < input.Length; ++i)
@@ -107,7 +106,7 @@ namespace RedBlackTree
                     if (input[0].Equals(Request.Commands[3]))
                     {
                         var request = new Request(ref input[0], 0, 0);
-                        lock ("Enqueue lock")
+                        lock (requestQueue)
                         {
                             requestQueue.Enqueue(request);
                         }
@@ -122,7 +121,7 @@ namespace RedBlackTree
                             request.id = idFind;
                             ++idFind;
                         }
-                        lock ("Enqueue lock")
+                        lock (requestQueue)
                         {
                             requestQueue.Enqueue(request);
                             // System.Console.WriteLine(String.Join(" ", input) + " successfully enqueued");
@@ -150,86 +149,57 @@ namespace RedBlackTree
                         continue;
                     }
                     Request nextRequest;
-                    lock ("Peek lock")
+                    lock (requestQueue)
                     {
-                        nextRequest = requestQueue.Peek();
+                        nextRequest = requestQueue.Dequeue();
                     }
                     if (nextRequest.command == 2)
                     {
-                        bool flag = false;
-                        lock ("Try to increase counter")
+                        while (workingRequest < 0 && !waitForUpdate)
                         {
-                            if (workingRequest >= 0)
-                            {
-                                ++workingRequest;
-                                requestQueue.Dequeue();
-                                flag = true;
-                            }        
+                            Thread.Sleep(100);
                         }
-                        if (flag)
+                        ++workingRequest;
+                        ThreadPool.QueueUserWorkItem(async _ =>
                         {
-                            ThreadPool.QueueUserWorkItem(async _ =>
-                            {
-                                var requestResult = await tree.Find(nextRequest.x);
-                                // Console.Write("result for request: find " + nextRequest.x);
-                                // Console.WriteLine(" is " + (requestResult == null ?
-                                                // "no such key" : requestResult.Value.ToString()));
-                                Console.WriteLine("#" + nextRequest.id + ": " +
-                                    (requestResult == null ? "null" : requestResult.Value.ToString()));
-                                lock ("Decrease counter")
-                                {
-                                    --workingRequest;
-                                }
-                            });
-                        }
+                            var requestResult = await tree.Find(nextRequest.x);
+                            // Console.Write("result for request: find " + nextRequest.x);
+                            // Console.WriteLine(" is " + (requestResult == null ?
+                                            // "no such key" : requestResult.Value.ToString()));
+                            Console.WriteLine("#" + nextRequest.id + ": " +
+                                (requestResult == null ? "null" : requestResult.Value.ToString()));
+                            --workingRequest;
+                        });
                     }
                     else if (nextRequest.command == 3)
                     {
-                        bool flag = false;
-                        lock ("Try to exit")
+                        while (workingRequest != 0)
                         {
-                            if (workingRequest == 0)
-                            {
-                                requestQueue.Dequeue();
-                                flag = true;
-                            }
+                            Thread.Sleep(0);
                         }
-                        if (flag)
-                        {
-                            break;
-                        }
+                        break;
                     }
                     else if (nextRequest.command <= 1)
                     {
-                        bool flag = false;
-                        lock ("Try to update")
+                        while (workingRequest != 0)
                         {
-                            if (workingRequest == 0)
-                            {
-                                --workingRequest;
-                                requestQueue.Dequeue();
-                                flag = true;
-                            }
+                            waitForUpdate = true;
+                            Thread.Sleep(0);
                         }
-                        if (flag)
+                        if (nextRequest.command == 0)
                         {
-                            if (nextRequest.command == 0)
-                            {
-                                var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
-                                // Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
-                                // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
-                            }
-                            else
-                            {
-                                var requestResult = await tree.Remove(nextRequest.x);
-                                // Console.Write("result for request: remove " + nextRequest.x);
-                                // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
-                            }
-                            lock ("Increase counter")
-                            {
-                                ++workingRequest;
-                            }
+                            var requestResult = await tree.Insert(nextRequest.x, nextRequest.y);
+                            // Console.Write("result for request: insert " + nextRequest.x + " " + nextRequest.y);
+                            // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
                         }
+                        else
+                        {
+                            var requestResult = await tree.Remove(nextRequest.x);
+                            // Console.Write("result for request: remove " + nextRequest.x);
+                            // Console.WriteLine(" is " + (requestResult ? "success": "fail"));
+                        }
+                        ++workingRequest;
+                        waitForUpdate = false;
                     }
                 }
             });

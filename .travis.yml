@@ -1,4 +1,8 @@
 language: csharp
 script: 
-  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out\
+  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out
   - ./RedBlackTree/tests/checker.py RedBlackTree/tests/test1.out RedBlackTree/tests/test1.out.gold
+  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test2.in > RedBlackTree/tests/test2.out
+  - ./RedBlackTree/tests/checker.py RedBlackTree/tests/test2.out RedBlackTree/tests/test2.out.gold
+  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test3.in > RedBlackTree/tests/test3.out
+  - ./RedBlackTree/tests/checker.py RedBlackTree/tests/test3.out RedBlackTree/tests/test3.out.gold
