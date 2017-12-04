@@ -1,5 +1,4 @@
 language: csharp
 script: 
-  - mcs -out:a.exe RedBlackTree/Main.cs RedBlackTree/RedBlackNode.cs RedBlackTree/RedBlackTree.cs
-  - mono a.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out
+  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out
   - diff RedBlackTree/tests/test1.out RedBlackTree/tests/test1.out.gold
