@@ -1,0 +1,2 @@
+language: csharp
+script: mcs -out:a.exe RedBlackTree/Main.cs RedBlackTree/RedBlackNode.cs RedBlackTree/RedBlackTree.cs
