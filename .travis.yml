@@ -1,5 +1,4 @@
 language: csharp
 script: 
-  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out
-  - diff RedBlackTree/tests/test1.out RedBlackTree/tests/test1.out.gold
-  - ./RedBlackTree/tests/checker test1.out test1.out.gold
+  - mono RedBlackTree/RedBlackTree.exe < RedBlackTree/tests/test1.in > RedBlackTree/tests/test1.out\
+  - ./RedBlackTree/tests/checker RedBlackTree/tests/test1.out RedBlackTree/tests/test1.out.gold
