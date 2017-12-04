@@ -11,6 +11,7 @@ namespace RedBlackTree
         public int command {get; set;} // 0 - insert, 1 - remove, 2 - find, 3 - exit
         public int x {get; set;}
         public int y {get; set;}
+        public int id {get; set;}
 
         public static readonly string[] Commands = {"insert", "remove", "find", "exit"};
 
@@ -72,6 +73,7 @@ namespace RedBlackTree
         {
             return Task.Run(() =>
             {
+                int idFind = 0;
                 while(true)
                 {
                     string[] input = Console.ReadLine().Split(null as char[], StringSplitOptions.RemoveEmptyEntries);
@@ -115,6 +117,11 @@ namespace RedBlackTree
                     {
                         var request = new Request(ref input[0], Convert.ToInt32(input[1]),
                                             input.Length == 3 ? Convert.ToInt32(input[2]): 0);
+                        if (input[0].Equals(Request.Commands[2]))
+                        {
+                            request.id = idFind;
+                            ++idFind;
+                        }
                         lock ("Enqueue lock")
                         {
                             requestQueue.Enqueue(request);
@@ -167,7 +174,8 @@ namespace RedBlackTree
                                 // Console.Write("result for request: find " + nextRequest.x);
                                 // Console.WriteLine(" is " + (requestResult == null ?
                                                 // "no such key" : requestResult.Value.ToString()));
-                                Console.WriteLine(requestResult == null ? "null" : requestResult.Value.ToString());
+                                Console.WriteLine("#" + nextRequest.id + ": " +
+                                    (requestResult == null ? "null" : requestResult.Value.ToString()));
                                 lock ("Decrease counter")
                                 {
                                     --workingRequest;
