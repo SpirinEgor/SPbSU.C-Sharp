@@ -9,3 +9,4 @@ if len(out_test) != len(out_gold):
 for line_gold in out_gold:
     if not line_gold in out_test:
         print False
+        exit(0)
