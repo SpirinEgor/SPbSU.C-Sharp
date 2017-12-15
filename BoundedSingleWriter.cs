@@ -98,38 +98,48 @@ namespace BoundedSingleWriter
                 Array.Copy(register, firstState, RegisterCount);
                 var secondState = new Register[RegisterCount];
                 Array.Copy(register, secondState, RegisterCount);
-                var condition = true;
-                for (var i = 0; i < RegisterCount; ++i)
+                bool noChangeFlag = true;
+                for (int i = 0; i < RegisterCount; ++i)
                 {
-                    if (firstState[i].p[id] == q[id, i] &&
+                    if (firstState[i].p[id] == secondState[i].p[id] &&
                         secondState[i].p[id] == q[id, i] &&
-                        firstState[i].toggle == secondState[i].toggle)
+                        a[i].toggle == b[i].toggle)
                     {
                         continue;
                     }
-                    if (moved[i] == 1)
+                    else
                     {
-                        if (flag) 
-                        {
-                            logRead.Add(timer.Elapsed, secondState[i].snapshot);
-                        }
-                        return secondState[i].snapshot;
+                        noChangeFlag = false;
                     }
-                    condition = false;
-                    ++moved[i];
                 }
-                if (condition)
+                if (noChangeFlag)
                 {
-                    var snapshot = new int[RegisterCount];
-                    for (var i = 0; i < RegisterCount; ++i)
+                    int data = new int[RegisterCount];
+                    for (int i = 0; i < RegisterCount; ++i)
                     {
-                        snapshot[i] = secondState[i].value;
+                        data[i] = secondState[i].value;
                     }
-                    if (flag) 
+                    return data;
+                }
+                for (var i = 0; i < RegisterCount; ++i)
+                {
+                    if (firstState[i].p[id] != q[id, i] ||
+                        secondState[i].p[id] != q[id, i] ||
+                        firstState[i].toggle != secondState[i].toggle)
                     {
-                        logRead.Add(timer.Elapsed, snapshot);
+                        if (moved[i] == 1)
+                        {
+                            if (flag) 
+                            {
+                                logRead.Add(timer.Elapsed, secondState[i].snapshot);
+                            }
+                            return secondState[i].snapshot;
+                        }
+                        else
+                        {
+                            ++moved[i];
+                        }
                     }
-                    return snapshot;
                 }
             }
         }
