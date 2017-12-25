@@ -22,23 +22,23 @@ namespace LinksDownloader
             string hrefPattern = "href\\s*=\\s*(?:[\"'])(http[^\"']*|[^\"']*\\.html?|[^\"']*\\.php\\??)(?:[\"'])";
             WebClient webClient = new WebClient();
             string source = webClient.DownloadString(url);
-            Match m = Regex.Match(source, hrefPattern, 
+            Match match = Regex.Match(source, hrefPattern, 
                         RegexOptions.IgnoreCase | RegexOptions.Compiled, 
                         TimeSpan.FromSeconds(1));
-            while (m.Success)
+            while (match.Success)
             {
-                var link = m.Groups[1].Value;
+                var link = match.Groups[1].Value;
                 if (!link.StartsWith("http") || !link.StartsWith("https"))
                 {
                     link = url.Split('?')[0] + link;
                 }
-                m = m.NextMatch();
+                match = match.NextMatch();
                 Task<int> linkLengthTask = GetLengthAsync(link);
                 links.Add(new Tuple<string, Task<int>>(link, linkLengthTask));
             }
-            foreach (var tuple in links)
+            foreach (var link in links)
             {
-                Console.WriteLine("{0} - {1}", tuple.Item1, tuple.Item2.Result);
+                Console.WriteLine("{0} - {1}", link.Item1, link.Item2.Result);
             }
         }
 

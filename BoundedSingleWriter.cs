@@ -14,12 +14,12 @@ namespace BoundedSingleWriter
         static void Main(string[] args)
         {
             var bsw = new BSW(RegisterCount);
-            var rd = new Random();
+            var random = new Random();
             var task = new Task[3];
             for (var i = 0; i < 10; i++)
             {
                 var id = i % 2;
-                var value = rd.Next(1000);
+                var value = random.Next(1000);
                 task[id] = Task.Run(() =>
                 {
                     Console.WriteLine("write value {0} in register №{1}", value, id);
@@ -35,7 +35,7 @@ namespace BoundedSingleWriter
                     }
                     task[2] = Task.Run(() =>
                     {
-                        Console.WriteLine("read from register №{0} on {1} interation: ({2})",
+                        Console.WriteLine("read from registers on interation {1} by register №{0}: ({2})",
                                 id, count, string.Join(", ", bsw.Scan(id)));
                     });
                 }
@@ -94,15 +94,15 @@ namespace BoundedSingleWriter
                 {
                     q[id, i] = register[i].p[id];
                 }
-                var firstState = new Register[RegisterCount];
-                Array.Copy(register, firstState, RegisterCount);
-                var secondState = new Register[RegisterCount];
-                Array.Copy(register, secondState, RegisterCount);
+                var a = new Register[RegisterCount];
+                Array.Copy(register, a, RegisterCount);
+                var b = new Register[RegisterCount];
+                Array.Copy(register, b, RegisterCount);
                 bool noChangeFlag = true;
                 for (int i = 0; i < RegisterCount; ++i)
                 {
-                    if (firstState[i].p[id] == secondState[i].p[id] &&
-                        secondState[i].p[id] == q[id, i] &&
+                    if (a[i].p[id] == b[i].p[id] &&
+                        b[i].p[id] == q[id, i] &&
                         a[i].toggle == b[i].toggle)
                     {
                         continue;
@@ -114,26 +114,30 @@ namespace BoundedSingleWriter
                 }
                 if (noChangeFlag)
                 {
-                    int data = new int[RegisterCount];
+                    int[] data = new int[RegisterCount];
                     for (int i = 0; i < RegisterCount; ++i)
                     {
-                        data[i] = secondState[i].value;
+                        data[i] = b[i].value;
+                    }
+                    if (flag)
+                    {
+                        logRead.Add(timer.Elapsed, data);
                     }
                     return data;
                 }
                 for (var i = 0; i < RegisterCount; ++i)
                 {
-                    if (firstState[i].p[id] != q[id, i] ||
-                        secondState[i].p[id] != q[id, i] ||
-                        firstState[i].toggle != secondState[i].toggle)
+                    if (a[i].p[id] != q[id, i] ||
+                        b[i].p[id] != q[id, i] ||
+                        a[i].toggle != b[i].toggle)
                     {
                         if (moved[i] == 1)
                         {
                             if (flag) 
                             {
-                                logRead.Add(timer.Elapsed, secondState[i].snapshot);
+                                logRead.Add(timer.Elapsed, b[i].snapshot);
                             }
-                            return secondState[i].snapshot;
+                            return b[i].snapshot;
                         }
                         else
                         {
@@ -151,11 +155,10 @@ namespace BoundedSingleWriter
             {
                 f[i] = !q[i, id];
             }
-            var snapshot = Scan(id, false);
             register[id].value = value;
-            register[id].p = f;
+            Array.Copy(f, register[id].p, RegisterCount);
             register[id].toggle = !register[id].toggle;
-            register[id].snapshot = snapshot;
+            register[id].snapshot = Scan(id, false);
             logWrite[id].Add(timer.Elapsed, value);
         }
 
