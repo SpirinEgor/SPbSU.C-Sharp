@@ -53,10 +53,10 @@ namespace BoundedSingleWriter
 
     class Register
     {
-        public int value {get; set;}
-        public bool[] p {get; set;}
-        public bool toggle {get; set;}
-        public int[] snapshot {get; set;}
+        public int Value {get; set;}
+        public bool[] P {get; set;}
+        public bool Toggle {get; set;}
+        public int[] Snapshot {get; set;}
     }
 
     class BSW

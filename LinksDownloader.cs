@@ -19,9 +19,8 @@ namespace LinksDownloader
                 return;
             }
             List<Tuple<string, Task<int>>> links = new List<Tuple<string, Task<int>>>();
-            string hrefPattern = "href\\s*=\\s*(?:[\"'])(http[^\"']*|[^\"']*\\.html?|[^\"']*\\.php\\??)(?:[\"'])";
-            WebClient webClient = new WebClient();
-            string source = webClient.DownloadString(url);
+            var hrefPattern = "href\\s*=\\s*(?:[\"'])(http[^\"']*|[^\"']*\\.html?|[^\"']*\\.php\\??)(?:[\"'])";
+            string source = new WebClient().DownloadString(url);
             Match match = Regex.Match(source, hrefPattern, 
                         RegexOptions.IgnoreCase | RegexOptions.Compiled, 
                         TimeSpan.FromSeconds(1));
@@ -46,9 +45,11 @@ namespace LinksDownloader
         {
             try
             {
-                WebClient webClient = new WebClient();
-                string data = await webClient.DownloadStringTaskAsync(link);
-                return data.Length;    
+                using (var webClient = new WebClient())
+                {
+                    string data = await webClient.DownloadStringTaskAsync(link);
+                    return data.Length;
+                }
             }
             catch (Exception ex)
             {
