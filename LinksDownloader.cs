@@ -11,17 +11,17 @@ namespace LinksDownloader
     {
         static void Main(string[] args)
         {
-            string url = Console.ReadLine();
-            string urlPattern = @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.\-\(\)\=]*)*\/?$";
+            var url = Console.ReadLine();
+            var urlPattern = @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.\-\(\)\=]*)*\/?$";
             if(!Regex.IsMatch(url, urlPattern))
             {
                 Console.WriteLine("this is not url");
                 return;
             }
-            List<Tuple<string, Task<int>>> links = new List<Tuple<string, Task<int>>>();
+            var links = new List<Tuple<string, Task<int>>>();
             var hrefPattern = "href\\s*=\\s*(?:[\"'])(http[^\"']*|[^\"']*\\.html?|[^\"']*\\.php\\??)(?:[\"'])";
-            string source = new WebClient().DownloadString(url);
-            Match match = Regex.Match(source, hrefPattern, 
+            var source = new WebClient().DownloadString(url);
+            var match = Regex.Match(source, hrefPattern, 
                         RegexOptions.IgnoreCase | RegexOptions.Compiled, 
                         TimeSpan.FromSeconds(1));
             while (match.Success)
@@ -47,7 +47,7 @@ namespace LinksDownloader
             {
                 using (var webClient = new WebClient())
                 {
-                    string data = await webClient.DownloadStringTaskAsync(link);
+                    var data = await webClient.DownloadStringTaskAsync(link);
                     return data.Length;
                 }
             }
